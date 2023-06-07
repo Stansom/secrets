@@ -13,4 +13,4 @@ frontend/shadow-cljs_example.edn
 frontend/public/js/**
 server/master.p
 server/passwords.db
-server/static/js/**
+server/static/js/cljs-runtime
