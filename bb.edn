@@ -1,0 +1,19 @@
+{:tasks
+ {create-static {:doc "Create static server"
+                 :requires ([babashka.fs :as fs]
+                            [clojure.string :as str]
+                            [babashka.process :as p])
+                 :task (do
+                         (when-not (fs/exists? "server/static")
+                           (println "static folder not exist, creating...")
+                           (fs/create-dir "server/static"))
+                         (if (fs/exists? "frontend/")
+                           (do
+                             (println "compiling frontend...")
+                             (shell {:dir "frontend"} "shadow-cljs release app")
+                             (fs/copy-tree
+                              "frontend/public/."
+                              "server/static" {:replace-existing true}))
+                           (println "no frontend dir")))}
+  ;
+  }}

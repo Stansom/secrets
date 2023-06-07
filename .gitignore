@@ -1,0 +1,15 @@
+.clj-kondo
+.calva
+.lsp
+.vscode
+.cpcache
+*.DS_Store
+.cpcache
+.shadow-cljs
+shadow-cljs_example_example.edn
+node_modules
+cljs-runtime
+frontend/package-lock.json
+frontend/shadow-cljs_example.edn
+server/master.p
+server/passwords.db

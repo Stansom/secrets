@@ -1,0 +1,22 @@
+{:deps {:aliases [:cljs]}
+ :nrepl {:port 3333 :host "0.0.0.0"}
+ :builds {:app {:target :browser
+                :output-dir "public/js"
+                :asset-path "/js"
+                :modules {:main {:entries [core]
+                                 :init-fn core/run}}
+                :devtools {:browser-inject :main
+                           :watch-dir "public"}
+                :release
+                          {:closure-defines {goog.DEBUG false
+                                             goog.debug.LOGGING_ENABLED true}
+                           :compiler-options
+                           {:fn-invoke-direct true
+                            :optimizations  :advanced
+                            #_#_:source-map true
+                            :elide-asserts true
+                            :anon-fn-naming-policy :off
+                            :source-map-detail-level :all}}
+                
+                }}
+ :dev-http {5000 "public"}}
