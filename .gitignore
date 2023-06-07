@@ -8,8 +8,9 @@
 .shadow-cljs
 shadow-cljs_example_example.edn
 node_modules
-cljs-runtime
 frontend/package-lock.json
 frontend/shadow-cljs_example.edn
+frontend/public/js/**
 server/master.p
 server/passwords.db
+server/static/js/**
