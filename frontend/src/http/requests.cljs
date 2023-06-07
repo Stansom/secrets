@@ -6,14 +6,22 @@
    [routing :as routes]
    [storage.db :as db]))
 
+;; TODO: WS support
+;; Display login window if not authorized while listing passwords
+
 (declare req)
 
 (def request-handlers
-  {:get-passwords {200 (fn [ps] (db/set-passwords! (ps :body)))}
-   :login {200 #(routes/push-state! "/list")
+  {:get-passwords {200 (fn [ps] (db/set-passwords! (ps :body))
+                         (db/set-value! :not-authorized false))
+                   401 (fn [ps] (db/set-value! :not-authorized true))}
+
+   :login {200 #(do (routes/push-state! "/list")
+                    (db/set-value! :not-authorized false))
            401 #(do (db/set-value! :not-authorized true)
-                    (js/setTimeout
-                     (fn [] (db/set-value! :not-authorized false)) 3000))}
+
+                    #_(js/setTimeout
+                       (fn [] (db/set-value! :not-authorized false)) 3000))}
    :update {200 #(let [saved? (db/subscribe :entry-saved?)]
                    (db/set-value! :entry-saved? true)
                    (js/setTimeout

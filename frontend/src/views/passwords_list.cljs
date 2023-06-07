@@ -4,14 +4,20 @@
    [components.password-entry :as pe]
    [http.requests :refer [req]]
    [storage.db :as db]
+   [routing :as routes]
    [components.icons :as icons]))
 
 (defn listing []
   (let [_ (req)]
     (fn []
       (let [passwords (db/subscribe :passwords)
-            saved? (db/subscribe :entry-saved?)]
+            saved? (db/subscribe :entry-saved?)
+            not-authorized? (db/subscribe :not-authorized)]
         [:div.section.has-text-centered
+         (when @not-authorized?
+           [:div.already-logged.notification.is-primary.mt-5
+            [:h4.is-size-4 "You're not authorized"]
+            [:button.button.is-success.mt-2 {:on-click #(routes/push-state! "/login")} "Login"]])
          (when @saved? [:div.notification.is-primary "saved"])
          (when @(db/subscribe :add-modal?)
            [add/add])

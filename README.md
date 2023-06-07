@@ -17,13 +17,13 @@
 - #### [Askonomm.Ruuter](https://github.com/askonomm/ruuter)
 - #### [Bulma.CSS](https://bulma.io)
 
-## To run the server on your PC:
+## To run the server and app on your PC:
 1. Install [Clojure](https://clojure.org/guides/getting_started)
 2. Install [Babashka](https://book.babashka.org)
 3. Clone the [repo](https://)
 4. Open dir with cloned repo in your terminal
 ```console
-cd "/path/to/cloned/repo"
+cd "path-to-cloned-repo/server"
 ```
 4. Run the command to start server and you can specify a port by using '-p' option
 and static server port by '-sport':

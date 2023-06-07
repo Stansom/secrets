@@ -32,5 +32,5 @@
   (let [{{:keys [host port]} entry} config]
     (str "http://" host ":" port)))
 
-(def front-host (host :static))
-front-host
+(def front-host (host :front))
+
