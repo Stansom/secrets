@@ -13,7 +13,8 @@
                      :edit-modal? false
                      :add-modal? false
                      :not-authorized nil
-                     :already-logged? false}))
+                     :already-logged? false
+                     :token nil}))
 
 (defn retrieve-entry [id]
   (r/cursor db [:passwords id]))
@@ -37,7 +38,9 @@
 (comment
   (apply str (map (constantly "•") "helloMaan111"))
   (set-value! :clicked-entry-id "id")
+  (set-value! :token "510ebfc64e67154a8ef14e55ff9cd6b48c5c9f2da3457c2269a3a9184ebf7070")
   (:delete-modal? @db)
+  (:token @db)
   (:entry-removed? @db)
   (:clicked-entry-id @db)
   (:passwords @db)
@@ -45,6 +48,6 @@
   (set-value! :delete-modal? false)
   @db
   (reset! db nil)
-  (swap! db conj "123")
+  (swap! db conj "123"))
   ;;
-  )
+

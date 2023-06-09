@@ -25,12 +25,19 @@
                                               (db/list-passwords db/db))}))
       (result/flat-map-err (constantly not-authorized-resp))))
 
+(defn tap [x msg]
+  (println (str "tapped from " msg ">") x)
+  x)
+
 (defn add-entry
   "Handles new password entry path"
   [req]
   (-> req
+      ;; (tap "from add-entry request: ")
       (result/map-ok (fn [r] (-> r :body)))
+      ;; (tap "from add-entry body: ")
       (result/flat-map-ok (fn [r] (result/of (slurp r) #(seq %))))
+      ;; (tap "from add-entry body slurped: ")
       (result/flat-map-ok (fn [r] (query/parse-multiple-query r)))
       (result/flat-map-ok (fn [r] (result/of r #(and (:url %) (:login %) (:password %)))))
       (result/flat-map-ok (fn [r] (db/insert-pass! db/db
@@ -38,7 +45,8 @@
                                                    (:login r)
                                                    (:password r))
                             {:status 200
-                             :body (format "entry for URL %s was added" (:url r))}))
+                             :body (json/write-str
+                                    (db/list-passwords db/db)) #_(format "entry for URL %s was added" (:url r))}))
 
       (result/flat-map-err (constantly not-authorized-resp))))
 
@@ -59,7 +67,8 @@
       (result/flat-map-ok (fn [r] (result/of r #(and (:id %)))))
       (result/flat-map-ok (fn [r] (db/remove-password db/db (parse-long (:id r)))
                             {:status 200
-                             :body (format "entry with id %s was removed" (:id r))}))
+                             :body (json/write-str
+                                    (db/list-passwords db/db))}))
 
       (result/flat-map-err (constantly not-authorized-resp))))
 
@@ -106,7 +115,8 @@
                                                    (:password r)
                                                    (parse-long (:id r)))
                             {:status 200
-                             :body (format "entry with id %s was updated" (:id r))}))
+                             :body (json/write-str
+                                    (db/list-passwords db/db))}))
 
       (result/flat-map-err (constantly not-authorized-resp))))
 

@@ -135,19 +135,27 @@
      encryption/decrypt-token
      second))
 
-#_(defn tap [x]
-    (println "tapped>" x)
-    x)
+(defn tap [x msg]
+  (println (str "tapped from " msg ">") x)
+  x)
 
 (defn already-logged?
   "Checks if user already logged-in via cookies and session token comparing"
   [req]
+  #_(println "already logged" (-> req :cookies #_(get "cookie") (parse-cookie "token")))
   (->
    (result/of (fs/exists? "master.p") true? #_#(and (true? %)))
    (result/flat-map-ok
-    (fn [_] (-> req :headers (get "cookie") (parse-cookie "token")
-
+    (fn [_] (-> req :cookies #_(get "cookie") (parse-cookie "token")
                 (result/of #(seq %))
+                (tap "WS")
+                (result/flat-map-ok  #(-> (and (= (slurp "master.p") %) %)
+                                          (result/of string?)))
+                (result/map-ok #(-> (persist-token-to-headers req %))))))
+   (result/flat-map-err
+    (fn [_] (-> req :headers (get "cookie") (parse-cookie "token")
+                (result/of #(seq %))
+                (tap "HTTP")
                 (result/flat-map-ok  #(-> (and (= (slurp "master.p") %) %)
                                           (result/of string?)))
                 (result/map-ok #(-> (persist-token-to-headers req %))))))

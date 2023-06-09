@@ -1,6 +1,5 @@
 (ns core
   (:require
-   [clojure.string :as str]
    [reagent.dom.client :as rdomc]
    [routing :as rt]
    [ruuter.core :as ruuter]
@@ -26,8 +25,7 @@
 
 (defn main []
   (let [_ #(rt/set-path! rt/path)
-        init-loc (or (str/replace (-> js/window .-location .-hash) #"\#" "") "/")
-        init-loc (if (seq init-loc) init-loc (-> js/window .-location .-pathname))]
+        init-loc (-> js/window .-location .-pathname)]
     (fn []
       (let [r (ruuter/route routes {:uri (if (seq @rt/path) @rt/path init-loc)})]
         (if (= 404 (:status r))

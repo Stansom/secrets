@@ -16,5 +16,6 @@
 (defn hook-browser-navigation
   "gets user interaction with browser navigation controls"
   []
-  (.addEventListener js/window "popstate" #(let [p (-> js/window .-location .-pathname)]
-                                             (reset! path p))))
+  (.addEventListener js/window "popstate"
+                     #(let [p (-> js/window .-location .-pathname)]
+                        (reset! path p))))

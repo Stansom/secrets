@@ -1,6 +1,7 @@
 (ns views.create
   (:require
    [components.input :as i]
+   [components.logged-notification :as logged-notification]
    [http.requests :as http]
    [reagent.core :as r]
    [routing :as routes]
@@ -14,9 +15,7 @@
        [:div.create_password.column.is-three-quarters.is-centered.has-text-centered
         [:div.block.create_text.is-narrow
          (when @logged?
-           [:div.already-logged.notification.is-primary.mt-5
-            [:h4.is-size-4 "You're already logged"]
-            [:button.button.is-success.mt-2 {:on-click #(routes/push-state! "/list")} "Show passwords"]])
+           [logged-notification/notification #(routes/push-state! "/list")])
          [:h1.is-size-2 "Create password"]
          [:form.control.has-icons-left
           {:on-submit #(do (-> % .preventDefault)

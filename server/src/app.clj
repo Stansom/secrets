@@ -97,7 +97,45 @@
       :else (println "nothing"))))
 
 (require '[babashka.process :refer [shell]])
+(require '[babashka.json :as json])
+
 (comment
+
+  (ruuter/route (rb/routes-builder routes)
+                {:uri "/login" :request-method :post :body (into-array Byte/TYPE "password=123")})
+
+  (ruuter/route (rb/routes-builder routes)
+                {:uri "/list" :request-method :get #_#_:body (into-array Byte/TYPE "password=123")})
+
+  (def ws-server (atom nil))
+
+  (defn handler [request]
+    (server/as-channel
+     request
+     {:on-receive (fn [ch message]
+                    (let [ps (json/read-str message {:key-fn keyword})
+                          ps (-> ps
+                                 (update :request-method keyword)
+                                 (update :body #(into-array Byte/TYPE %))
+                                 #_(assoc :params {:token (:token ps)}))
+                          resp (ruuter/route (rb/routes-builder routes) ps)
+                          resp (into {} (filter (comp #{:status :body #_:token} key) resp))]
+                      (server/send! ch (json/write-str resp))
+                      (println "on-receive:" ps "request:" (:uri request))))
+      :on-close   (fn [ch status]  (println "on-close:"   status))
+      :on-open    (fn [ch] (println "on-open:"    ch))}))
+
+  (defn my-server []
+    (let [s (server/run-server handler {:port 8080})]
+      (reset! ws-server s)))
+
+  (defn stop-ws []
+    (@ws-server))
+
+  (stop-ws)
+
+  (my-server)
+
   (-main "--stop")
   (stop-server)
   (run-server 2525 5001)
