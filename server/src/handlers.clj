@@ -38,7 +38,9 @@
                                                    (:login r)
                                                    (:password r))
                             {:status 200
-                             :body (format "entry for URL %s was added" (:url r))}))
+                             :headers {"Content-Type" "application/json"}
+                             :body (json/write-str
+                                    (db/list-passwords db/db))}))
 
       (result/flat-map-err (constantly not-authorized-resp))))
 
@@ -59,7 +61,9 @@
       (result/flat-map-ok (fn [r] (result/of r #(and (:id %)))))
       (result/flat-map-ok (fn [r] (db/remove-password db/db (parse-long (:id r)))
                             {:status 200
-                             :body (format "entry with id %s was removed" (:id r))}))
+                             :headers {"Content-Type" "application/json"}
+                             :body (json/write-str
+                                    (db/list-passwords db/db))}))
 
       (result/flat-map-err (constantly not-authorized-resp))))
 
@@ -106,7 +110,9 @@
                                                    (:password r)
                                                    (parse-long (:id r)))
                             {:status 200
-                             :body (format "entry with id %s was updated" (:id r))}))
+                             :headers {"Content-Type" "application/json"}
+                             :body (json/write-str
+                                    (db/list-passwords db/db))}))
 
       (result/flat-map-err (constantly not-authorized-resp))))
 
