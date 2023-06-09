@@ -6,45 +6,37 @@
    [routing :as routes]
    [storage.db :as db]))
 
-;; TODO: WS support
-;; Display login window if not authorized while listing passwords
-
-(declare req)
-
 (def request-handlers
   {:get-passwords {200 (fn [ps] (db/set-passwords! (ps :body))
                          (db/set-value! :not-authorized false))
-                   401 (fn [ps] (db/set-value! :not-authorized true))}
+                   401 (fn [] (db/set-value! :not-authorized true))}
 
    :login {200 #(do (routes/push-state! "/list")
                     (db/set-value! :not-authorized false))
-           401 #(do (db/set-value! :not-authorized true)
+           401 #(do (db/set-value! :not-authorized true))}
 
-                    #_(js/setTimeout
-                       (fn [] (db/set-value! :not-authorized false)) 3000))}
-   :update {200 #(let [saved? (db/subscribe :entry-saved?)]
-                   (db/set-value! :entry-saved? true)
-                   (js/setTimeout
-                    (fn []
-                      (db/set-value! :entry-saved? false)) 1000)
-                   (when @saved? (req)))}
+   :update {200 #(do  (db/set-value! :entry-saved? true)
+                      (db/set-passwords! (% :body))
+                      (js/setTimeout
+                       (fn []
+                         (db/set-value! :entry-saved? false)) 1000))}
+
    :remove {200 #(do
-                   (req)
+                   (db/set-passwords! (% :body))
                    (db/set-value! :delete-modal? false))}
-   :add {200 #(let [saved? (db/subscribe :entry-saved?)]
-                (db/set-value! :entry-saved? true)
-                (js/setTimeout
-                 (fn []
-                   (db/set-value! :entry-saved? false)) 500)
-                (when @saved? (req)))}
+   :add {200 #(do (db/set-value! :entry-saved? true)
+                  (db/set-passwords! (% :body))
+                  (js/setTimeout
+                   (fn []
+                     (db/set-value! :entry-saved? false)) 500))}
+
    :create-password {200 #(case (:body %)
                             "password has been added" (routes/push-state! "/list")
-                            "already logged" (db/set-value! :already-logged? true))}
+                            "already logged" (db/set-value! :already-logged? true))}})
 
 ;;
-   })
 
-(defn handle [#_m h r]
+(defn handle [h r]
   (get (request-handlers h) r
        (constantly "no req handler")))
 
