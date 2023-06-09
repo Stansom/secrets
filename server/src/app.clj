@@ -1,17 +1,15 @@
 (ns app
   (:refer-clojure :exclude [list])
   (:require [app.common.config :as config]
-            [app.common.result :as result]
-            [babashka.fs :as fs]
             [clojure.pprint :as pprint]
-            [clojure.string :as str]
             [clojure.tools.cli :refer [parse-opts]]
             [handlers :as hs]
             [org.httpkit.server :as server]
             [routes :as rb]
             [ruuter.core :as ruuter]
             [static-server :as static]
-            [system :as system]))
+            [system :as system]
+            ws-server))
 
 (def cli-options
   ;; An option with a required argument
@@ -64,6 +62,8 @@
 (defn app [req]
   (ruuter/route (rb/routes-builder routes) req))
 
+
+
 (defn start-server [port]
   (let [s (server/run-server #'app
                              {:port port})]
@@ -78,11 +78,13 @@
 
 (defn run-server [port st-port]
   (start-server port)
-  (static/start-static-server st-port))
+  (static/start-static-server st-port)
+  (ws-server/ws-server 8080 #(ruuter/route (rb/routes-builder routes) %)))
 
 (defn stop-server []
   (stop-serve)
-  (static/stop-static-server))
+  (static/stop-static-server)
+  (ws-server/stop-ws))
 
 (defn restart-server []
   (stop-server)
@@ -96,62 +98,11 @@
       port (do (run-server port sport) @(promise))
       :else (println "nothing"))))
 
-(require '[babashka.process :refer [shell]])
-(require '[babashka.json :as json])
-
 (comment
-
-  (ruuter/route (rb/routes-builder routes)
-                {:uri "/login" :request-method :post :body (into-array Byte/TYPE "password=123")})
-
-  (ruuter/route (rb/routes-builder routes)
-                {:uri "/list" :request-method :get #_#_:body (into-array Byte/TYPE "password=123")})
-
-  (def ws-server (atom nil))
-
-  (defn handler [request]
-    (server/as-channel
-     request
-     {:on-receive (fn [ch message]
-                    (let [ps (json/read-str message {:key-fn keyword})
-                          ps (-> ps
-                                 (update :request-method keyword)
-                                 (update :body #(into-array Byte/TYPE %))
-                                 #_(assoc :params {:token (:token ps)}))
-                          resp (ruuter/route (rb/routes-builder routes) ps)
-                          resp (into {} (filter (comp #{:status :body #_:token} key) resp))]
-                      (server/send! ch (json/write-str resp))
-                      (println "on-receive:" ps "request:" (:uri request))))
-      :on-close   (fn [ch status]  (println "on-close:"   status))
-      :on-open    (fn [ch] (println "on-open:"    ch))}))
-
-  (defn my-server []
-    (let [s (server/run-server handler {:port 8080})]
-      (reset! ws-server s)))
-
-  (defn stop-ws []
-    (@ws-server))
-
-  (stop-ws)
-
-  (my-server)
-
   (-main "--stop")
   (stop-server)
   (run-server 2525 5001)
   @system/system
   (restart-server)
-  (System/getenv)
-  #_(re-seq  #"/(.*)$" #_#"(?=[^/]+$)(.*)" (str (fs/cwd)))
-  (str/replace (str (fs/cwd)) "secrets/server" "secrets/frontend")
-  (str/split (str (fs/cwd)) #"/")
-  (shell {:out "test.txt"
-          :dir (str (fs/cwd)) #_(str/replace (fs/cwd) "!" "\\!")} #_"cd /usr/bin/"  "ls")
-  (str (fs/cwd))
-
-  (shell {:out "test.txt"} "ls")
-  (fs/real-path (fs/cwd))
-  (fs/real-path "static/.")
-  (fs/glob "static" "*" {:recursive true})
    ;;
   )

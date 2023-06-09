@@ -4,7 +4,8 @@
                        :server nil
                        :session-keys #{}
                        :static-port nil
-                       :static-server nil}))
+                       :static-server nil
+                       :ws-server nil}))
 
 (defn reset-session-keys! []
   (swap! system assoc-in [:session-keys] #{}))
