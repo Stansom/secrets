@@ -1,10 +1,7 @@
 (ns app
   (:refer-clojure :exclude [list])
   (:require [app.common.config :as config]
-            [app.common.result :as result]
-            [babashka.fs :as fs]
             [clojure.pprint :as pprint]
-            [clojure.string :as str]
             [clojure.tools.cli :refer [parse-opts]]
             [handlers :as hs]
             [org.httpkit.server :as server]
@@ -95,25 +92,11 @@
     (cond
       port (do (run-server port sport) @(promise))
       :else (println "nothing"))))
-
-(require '[babashka.process :refer [shell]])
 (comment
   (-main "--stop")
   (stop-server)
   (run-server 2525 5001)
   @system/system
   (restart-server)
-  (System/getenv)
-  #_(re-seq  #"/(.*)$" #_#"(?=[^/]+$)(.*)" (str (fs/cwd)))
-  (str/replace (str (fs/cwd)) "secrets/server" "secrets/frontend")
-  (str/split (str (fs/cwd)) #"/")
-  (shell {:out "test.txt"
-          :dir (str (fs/cwd)) #_(str/replace (fs/cwd) "!" "\\!")} #_"cd /usr/bin/"  "ls")
-  (str (fs/cwd))
-
-  (shell {:out "test.txt"} "ls")
-  (fs/real-path (fs/cwd))
-  (fs/real-path "static/.")
-  (fs/glob "static" "*" {:recursive true})
-   ;;
+  ;;
   )
