@@ -14,12 +14,12 @@
 (def routes
   [{:path "/"
     :response (fn [_] [main/selector])}
+   {:path "/create"
+    :response (fn [_] [create/create])}
    {:path "/index.html"
     :response (fn [_] [main/selector])}
    {:path "/login"
     :response (fn [_] [login/login])}
-   {:path "/create"
-    :response (fn [_] [create/create])}
    {:path "/list"
     :response (fn [_] [l/listing])}])
 

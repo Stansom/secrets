@@ -33,14 +33,17 @@
          [:div {:style {:display "grid"
                         :grid-template-columns "30% 30% 30% 60px"
                         :justify-items "start"
-                        :margin-left "5%"
+                        :margin-left "13%"
                         :margin-bottom "5px"}}
           [:span.is-size-4 "URL"]
           [:span.is-size-4 "Login"]
           [:span.is-size-4 "Password"]]
 
-         [:ul.is-flex.is-flex-direction-column
-          (when (seq @passwords)
-            (doall (map (fn [[id entry]]
-                          ^{:key id}
-                          [pe/pass-entry entry]) @passwords)))]]))))
+         [:ul.is-flex.is-flex-direction-column.is-align-items-center
+          (when-let [passwords @passwords]
+            (for [[id _] passwords]
+              ^{:key id}
+              [pe/pass-entry (get passwords id)]))]]))))
+
+
+

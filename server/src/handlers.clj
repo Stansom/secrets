@@ -9,21 +9,21 @@
             [queries :as query]
             [system :as system]))
 
-;; (def front-host (config/host :static))
 (def front-host config/front-host)
 
-(def not-authorized-resp {:status 401 :headers {"Content-Type" "text/plain"}
+(def not-authorized-resp {:status 401
+                          :headers {"Content-Type" "text/plain"}
                           :body (str :not-authorized)})
 
 (defn list-passwords
   "Handles list passwords path, returns json"
   [req]
-  (-> req
-      (result/flat-map-ok (constantly {:status 200
-                                       :headers {"Content-Type" "application/json"}
-                                       :body (json/write-str
-                                              (db/list-passwords db/db))}))
-      (result/flat-map-err (constantly not-authorized-resp))))
+  (let [t {:type "list-passwords"}]
+    (-> req
+        (result/flat-map-ok (constantly (merge {:status 200
+                                                :body (json/write-str
+                                                       (db/list-passwords db/db))} t)))
+        (result/flat-map-err (constantly (merge not-authorized-resp t))))))
 
 (defn tap [x msg]
   (println (str "tapped from " msg ">") x)
@@ -32,23 +32,24 @@
 (defn add-entry
   "Handles new password entry path"
   [req]
-  (-> req
+  (let [t {:type "add"}]
+    (-> req
       ;; (tap "from add-entry request: ")
-      (result/map-ok (fn [r] (-> r :body)))
+        (result/map-ok (fn [r] (-> r :body)))
       ;; (tap "from add-entry body: ")
-      (result/flat-map-ok (fn [r] (result/of (slurp r) #(seq %))))
+        (result/flat-map-ok (fn [r] (result/of (slurp r) #(seq %))))
       ;; (tap "from add-entry body slurped: ")
-      (result/flat-map-ok (fn [r] (query/parse-multiple-query r)))
-      (result/flat-map-ok (fn [r] (result/of r #(and (:url %) (:login %) (:password %)))))
-      (result/flat-map-ok (fn [r] (db/insert-pass! db/db
-                                                   (:url r)
-                                                   (:login r)
-                                                   (:password r))
-                            {:status 200
-                             :body (json/write-str
-                                    (db/list-passwords db/db)) #_(format "entry for URL %s was added" (:url r))}))
+        (result/flat-map-ok (fn [r] (query/parse-multiple-query r)))
+        (result/flat-map-ok (fn [r] (result/of r #(and (:url %) (:login %) (:password %)))))
+        (result/flat-map-ok (fn [r] (db/insert-pass! db/db
+                                                     (:url r)
+                                                     (:login r)
+                                                     (:password r))
+                              (merge {:status 200
+                                      :body (json/write-str
+                                             (db/list-passwords db/db))} t)))
 
-      (result/flat-map-err (constantly not-authorized-resp))))
+        (result/flat-map-err (constantly (merge not-authorized-resp t))))))
 
 (def random-password
   "Handles random password generation"
@@ -60,17 +61,18 @@
 (defn remove-password
   "Handles password removing path"
   [req]
-  (-> req
-      (result/map-ok (fn [r] (-> r :body)))
-      (result/flat-map-ok (fn [r] (result/of (slurp r) #(seq %))))
-      (result/flat-map-ok (fn [r] (query/parse-multiple-query r)))
-      (result/flat-map-ok (fn [r] (result/of r #(and (:id %)))))
-      (result/flat-map-ok (fn [r] (db/remove-password db/db (parse-long (:id r)))
-                            {:status 200
-                             :body (json/write-str
-                                    (db/list-passwords db/db))}))
+  (let [t {:type "remove-password"}]
+    (-> req
+        (result/map-ok (fn [r] (-> r :body)))
+        (result/flat-map-ok (fn [r] (result/of (slurp r) #(seq %))))
+        (result/flat-map-ok (fn [r] (query/parse-multiple-query r)))
+        (result/flat-map-ok (fn [r] (result/of r #(and (:id %)))))
+        (result/flat-map-ok (fn [r] (db/remove-password db/db (parse-long (:id r)))
+                              (merge {:status 200
+                                      :body (json/write-str
+                                             (db/list-passwords db/db))} t)))
 
-      (result/flat-map-err (constantly not-authorized-resp))))
+        (result/flat-map-err (constantly (merge not-authorized-resp t))))))
 
 (defn logout
   "Handles logging out of the user"
@@ -104,21 +106,23 @@
           :body "password has been added"}))))
 
 (defn update-entry [req]
-  (-> req
-      (result/map-ok (fn [r] (-> r :body)))
-      (result/flat-map-ok (fn [r] (result/of (slurp r) #(seq %))))
-      (result/flat-map-ok (fn [r] (query/parse-multiple-query r)))
-      (result/flat-map-ok (fn [r] (result/of r #(and (:url %) (:login %) (:password %) (:id %)))))
-      (result/flat-map-ok (fn [r] (db/update-entry db/db
-                                                   (:url r)
-                                                   (:login r)
-                                                   (:password r)
-                                                   (parse-long (:id r)))
-                            {:status 200
-                             :body (json/write-str
-                                    (db/list-passwords db/db))}))
+  (let [t {:type "remove-password"}]
+    (-> req
+        (result/map-ok (fn [r] (-> r :body)))
+        (result/flat-map-ok (fn [r] (result/of (slurp r) #(seq %))))
+        (result/flat-map-ok (fn [r] (query/parse-multiple-query r)))
+        (result/flat-map-ok (fn [r] (result/of r #(and (:url %) (:login %)
+                                                       (:password %) (:id %)))))
+        (result/flat-map-ok (fn [r] (db/update-entry db/db
+                                                     (:url r)
+                                                     (:login r)
+                                                     (:password r)
+                                                     (parse-long (:id r)))
+                              (merge {:status 200
+                                      :body (json/write-str
+                                             (db/list-passwords db/db))} t)))
 
-      (result/flat-map-err (constantly not-authorized-resp))))
+        (result/flat-map-err (constantly (merge not-authorized-resp t))))))
 
 (defn wrap-cors [res]
   (update res :headers merge {"Access-Control-Allow-Origin" front-host
@@ -126,9 +130,9 @@
 
 (def handlers
   "Handlers map"
-  {:add {:response #(-> % add-entry wrap-cors)
+  {:add {:response #(-> % add-entry)
          :middleware [auth/already-logged?]}
-   :update-entry {:response #(-> % update-entry wrap-cors)
+   :update-entry {:response #(-> % update-entry)
                   :middleware [auth/already-logged?]}
    :allow-cors (constantly {:status 200
                             :headers {"Content-Type" "text/plain"
@@ -138,9 +142,9 @@
                                         "POST")
                                       "Access-Control-Allow-Origin" front-host
                                       "Access-Control-Allow-Credentials" "true"}})
-   :remove-password {:response #(-> % remove-password wrap-cors)
+   :remove-password {:response #(-> % remove-password)
                      :middleware [auth/already-logged?]}
-   :list-passwords {:response #(-> % list-passwords wrap-cors)
+   :list-passwords {:response #(-> % list-passwords)
                     :middleware [auth/already-logged?]}
    :random-password random-password
    :set-password {:response #_#(-> % set-password wrap-cors)
@@ -161,8 +165,6 @@
                                   (result/flat-map-err (comp auth/auth-token :payload))
                                   (result/flat-map-err (comp auth/auth-body :payload)))]}
    :create-db! (fn [_] (db/create-db! db/db db/create-passwords-table-query))})
-
-
 
 (defn dispatch
   "Dispatches routes, matching type over Handler map and calls 
@@ -309,6 +311,6 @@
                                              :query-string nil #_"username=koha&password=miloha&urlpassword=111new&url=111goo.com&login=jooh",
                                              :body nil #_(into-array Byte/TYPE "password=newone" #_"urlpassword=secret&url=oolo.com&login=jooh"),
                                              :scheme :http,
-                                             :request-method :get}})
+                                             :request-method :get}}))
   ;;
-  )
+

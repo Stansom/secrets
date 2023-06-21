@@ -3,21 +3,25 @@
             [org.httpkit.server :as server]
             [system :as system]))
 
+(def clients (atom {}))
+
 (defn ws-handler [request router]
   (server/as-channel
    request
-   {:on-receive (fn [ch message]
+   {:on-receive (fn [_ message]
                   (let [ps (json/read-str message {:key-fn keyword})
                         ps (-> ps
                                (update :request-method keyword)
-                               (update :body #(into-array Byte/TYPE %))
-                               #_(assoc :params {:token (:token ps)}))
-                        resp (router ps)
-                        resp (into {} (filter (comp #{:status :body #_:token} key) resp))]
-                    (server/send! ch (json/write-str resp))
-                    (println "on-receive:" ps "request:" (:uri request))))
-    :on-close   (fn [ch status]  (println "on-close:"   status))
-    :on-open    (fn [ch] (println "on-open:"    ch))}))
+                               (update :body #(into-array Byte/TYPE %)))
+                        resp (router ps)]
+                    (doseq [[_ cl] @clients]
+                      (server/send! cl (json/write-str resp)))))
+    :on-close   (fn [ch _]
+                  (swap! clients dissoc (str ch))
+                  #_(println "on-close:"   status))
+    :on-open    (fn [ch]
+                  (swap! clients assoc (str ch) ch)
+                  #_(println "on-open:"    ch))}))
 
 (defn ws-server [port router]
   (let [s (server/run-server #(ws-handler % router) {:port port})]

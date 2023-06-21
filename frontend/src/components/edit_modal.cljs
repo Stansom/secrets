@@ -23,17 +23,21 @@
    `rf` is a function called when data was pushed to the server 
    `saved?` is atom to inform the world what data was successfully saved   
    "
-  []
+  [id active?]
   (let [add-btn-enabled (r/atom true)
-        switch-off #(db/set-value! :edit-modal? false)
-        id (db/subscribe :clicked-entry-id)
+        switch-off #(reset! active? false)
+        id (r/atom id)
         chosen-entry (db/retrieve-entry @id)
         login-inp (r/atom (@chosen-entry :login))
         url-inp (r/atom (@chosen-entry :url))
         pass-inp (r/atom (@chosen-entry :password))
-        save-to-db #(do (db/update-entry chosen-entry :login @login-inp)
+        save-to-db #(do (db/set-value! :entry-saved? true)
+                        (db/update-entry chosen-entry :login @login-inp)
                         (db/update-entry chosen-entry :url @url-inp)
-                        (db/update-entry chosen-entry :password @pass-inp))
+                        (db/update-entry chosen-entry :password @pass-inp)
+                        (js/setTimeout
+                         (fn []
+                           (db/set-value! :entry-saved? false)) 1000))
         save-handler #(do
                         (save-to-db)
                         (http/update-entry login-inp pass-inp url-inp id)
@@ -44,7 +48,7 @@
                        "Esc" (switch-off)
                        nil)]
     (fn []
-      [:div.modal.is-four-fifths {:class (when @(db/subscribe :edit-modal?) "is-active")}
+      [:div.modal.is-four-fifths.is-active
        [:div.modal-background {:on-click switch-off}]
        [:div.modal-content
         [:div.box
@@ -75,14 +79,15 @@
                (-> (password-input @pass-inp)
                    (result/match
                     (fn [_] (reset! add-btn-enabled true) "")
+
                      (fn [r] (reset! add-btn-enabled false)
-                       [:div.message.is-danger.is-small [:div#password_error.message-body r]])))]]]
-            [:div.level.is-mobile.is-justify-content-flex-end
-             [:div.level-right
-              [:button.button.level-item.is-danger.is-small {:aria-label "cancel"
-                                                             :on-click switch-off} "Cancel"]
-              [:button.button.level-item.is-success.is-small.ml-1 {:disabled (and (not @add-btn-enabled))
-                                                                   :on-click save-handler
-                                                                   :aria-label "save"} "Save"]]]]]]]]
-       [:button.modal-close.is-large {:aria-label "close"
-                                      :on-click switch-off}]])))
+                       [:div.message.is-danger.is-small [:div#password_error.message-body r]])))
+               [:button.modal-close.is-large {:aria-label "close"
+                                              :on-click switch-off}]]]
+             [:div.level.is-mobile.is-justify-content-flex-end
+              [:div.level-right
+               [:button.button.level-item.is-danger.is-small {:aria-label "cancel"
+                                                              :on-click switch-off} "Cancel"]
+               [:button.button.level-item.is-success.is-small.ml-1 {:disabled (and (not @add-btn-enabled))
+                                                                    :on-click save-handler
+                                                                    :aria-label "save"} "Save"]]]]]]]]]])))

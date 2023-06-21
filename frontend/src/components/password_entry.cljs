@@ -9,6 +9,8 @@
 (defn pass-entry [{:keys [password id url login]}]
   (let [blurred? (r/atom true)
         copied? (r/atom false)
+        edit-modal? (r/atom false)
+        delete-modal? (r/atom false)
         remove-entry #(do (db/set-value! :clicked-entry-id id)
                           (db/set-value! :clicked-url url)
                           (db/set-value! :delete-modal? true))
@@ -17,20 +19,20 @@
                       (db/set-value! :clicked-url url)
                       (db/set-value! :clicked-pass password)
                       (db/set-value! :clicked-login login)
-                      (db/toggle-edit-modal))
+                      #_(db/toggle-edit-modal))
         copy-to-clipboard #(do
                              (-> js/window .-navigator .-clipboard (.writeText %))
                              (reset! copied? true)
                              (js/setTimeout (fn [] (reset! copied? false)) 1000))]
     (fn [{:keys [password url login]}]
       (let [pass-inp (r/atom password)
-            pass-hidden (r/atom (apply str (map (constantly "•") @pass-inp)) #_(str/replace @pass-inp #"." "*"))
             url-inp (r/atom url)
-            login-inp (r/atom login)]
-        [:li.column.password_entry {:class "box"}
-         [dm/delete-modal]
-         (when @(db/subscribe :edit-modal?)
-           [ed-mod/modal])
+            login-inp (r/atom login)
+            pass-hidden (r/atom (apply str (map (constantly "•") @pass-inp)) #_(str/replace @pass-inp #"." "*"))]
+        [:li.column.password_entry.is-four-fifths.pass_entry
+         (when @delete-modal? [dm/delete-modal id delete-modal?])
+         (when @edit-modal?
+           [ed-mod/modal id edit-modal?])
          (when @copied? [:div.notification.is-success {:on-click #(reset! copied? false)}
                          [:button.delete {:on-click #(reset! copied? false)}] "password was copied"])
          [:div {:style {:display "grid"
@@ -53,13 +55,13 @@
                                     :z-index 1}}
             [icons/unlock blurred?]
             [icons/copy-to-cb #(copy-to-clipboard password)]]]
-          [:div.edit_delete__icons {:style {:display :flex
-                                            :align-items :center}}
+          [:div.edit_delete__icons.ml-2 {:style {:display :flex
+                                                 :align-items :center}}
            [:span.icon {:style {:width "19px" :height "19px"}
-                        :on-click edit-entry}
+                        :on-click #_edit-entry #(reset! edit-modal? (not @edit-modal?))}
             [icons/edit]]
 
-           [:span.icon.pl-5 {:on-click remove-entry
+           [:span.icon.pl-2 {:on-click #_remove-entry #(reset! delete-modal? (not @delete-modal?))
                              :style {:color "#ce1c1c"}}
             [:i.fas.thin.fa-delete-left
              {:style {:z-index 1}}]]]]]))))

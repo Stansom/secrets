@@ -23,7 +23,11 @@
         url-inp (r/atom "")
         pass-inp (r/atom "")
         reset-inputs (fn [] (reset! login-inp "") (reset! url-inp "") (reset! pass-inp ""))
-        push-to-server #(http/add-entry login-inp pass-inp url-inp)
+        push-to-server #(do
+                          (db/set-value! :entry-saved? true)
+                          (http/add-entry login-inp pass-inp url-inp)
+                          (js/setTimeout (fn []
+                                           (db/set-value! :entry-saved? false)) 500))
         key-handler #(case %
                        "Enter" (push-to-server)
                        "Escape" (close-modal)

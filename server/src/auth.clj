@@ -148,7 +148,6 @@
    (result/flat-map-ok
     (fn [_] (-> req :cookies #_(get "cookie") (parse-cookie "token")
                 (result/of #(seq %))
-                (tap "WS")
                 (result/flat-map-ok  #(-> (and (= (slurp "master.p") %) %)
                                           (result/of string?)))
                 (result/map-ok #(-> (persist-token-to-headers req %))))))

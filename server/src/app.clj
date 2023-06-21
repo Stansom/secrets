@@ -62,8 +62,6 @@
 (defn app [req]
   (ruuter/route (rb/routes-builder routes) req))
 
-
-
 (defn start-server [port]
   (let [s (server/run-server #'app
                              {:port port})]
@@ -103,6 +101,6 @@
   (stop-server)
   (run-server 2525 5001)
   @system/system
-  (restart-server)
+  (restart-server))
    ;;
-  )
+
